@@ -103,6 +103,18 @@ void init_thread(struct task_struct* pthread, char* name, int prio) {
     pthread->elapsed_ticks = 0; //累计时间初始化为0
     pthread->pgdir = NULL; //线程没有自己的虚拟地址空间
 
+    //14章新增，文件描述符初始化工作，处理三个标准文件描述符，其他描述符都初始化为-1
+   /* 预留标准输入输出 */
+   pthread->fd_table[0] = 0;
+   pthread->fd_table[1] = 1;
+   pthread->fd_table[2] = 2;
+   /* 其余的全置为-1 */
+   uint8_t fd_idx = 3;
+   while (fd_idx < MAX_FILES_OPEN_PER_PROC) {
+      pthread->fd_table[fd_idx] = -1;
+      fd_idx++;
+   }
+
     //自定义魔数
     pthread->stack_magic = 0x19870916; 
 }

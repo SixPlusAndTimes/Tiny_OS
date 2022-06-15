@@ -4,6 +4,8 @@
 #include "list.h"
 #include "bitmap.h"
 #include "memory.h"
+
+#define MAX_FILES_OPEN_PER_PROC 8
 //使用typedef定义函数类型，注意typedef定义函数指针与定义函数类型的区别！！
 //https://blog.csdn.net/xiaorenwuzyh/article/details/48997767
 typedef void thread_func(void*);
@@ -80,6 +82,8 @@ struct task_struct {
     uint8_t priority; // 线程优先级
     uint8_t ticks; // 每一次 该线程在处理器上被分配的时间片
     uint8_t elapsed_ticks; //此任务自第一次被执行以来，一共执行了多少个时间片
+
+     int32_t fd_table[MAX_FILES_OPEN_PER_PROC];	// 文件描述符数组
     
     struct list_elem general_tag;// 位于一般线程队列中的节点的标签
     struct list_elem all_list_tag; // 位于 thread_all_list中的节点； 每个线程PCB的此属性都会加入到thread_all_list链表中

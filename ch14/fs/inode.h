@@ -4,6 +4,7 @@
 #include "list.h"
 
 // inode数据结构
+//i_size 、 inode_tag 这两个属性只存在于内存，不在硬盘中
 struct inode {
    uint32_t i_no;    // inode编号
 
