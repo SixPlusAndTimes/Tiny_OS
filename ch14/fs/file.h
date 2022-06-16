@@ -24,7 +24,7 @@ enum bitmap_type {
    INODE_BITMAP,     // inode位图
    BLOCK_BITMAP	     // 块位图
 };
-
+/* 系统可打开的最大文件次数 = 32 */
 #define MAX_FILE_OPEN 32    // 系统可打开的最大文件数
 
 extern struct file file_table[MAX_FILE_OPEN];
