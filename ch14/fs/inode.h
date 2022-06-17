@@ -20,4 +20,10 @@ struct inode {
    uint32_t i_sectors[13];
    struct list_elem inode_tag;//当一个文件被打开时要将对应的inode加载到内存时，将这个标签加入内存的缓冲队列，如果某个进程再次打开这个文件，那么先在缓冲队列中查找相关的inode，否则再从磁盘上加载啊inod
 };
+
+
+struct inode* inode_open(struct partition* part, uint32_t inode_no);
+void inode_sync(struct partition* part, struct inode* inode, void* io_buf);
+void inode_init(uint32_t inode_no, struct inode* new_inode);
+void inode_close(struct inode* inode);
 #endif
