@@ -10,6 +10,7 @@
 #include "global.h"
 #include "debug.h"
 #include "memory.h"
+#include "file.h"
 
 struct partition* cur_part;	 // 默认情况下操作的是哪个分区
 

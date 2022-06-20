@@ -4,7 +4,8 @@
 #include "stdint.h"
 #include "thread.h"
 
-// 信号量结构
+/*   uint8_t value;
+    struct list waiters; */
 struct semaphore {
     uint8_t value;
     struct list waiters;

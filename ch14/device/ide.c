@@ -217,9 +217,9 @@ void ide_write(struct disk* hd, uint32_t lba, void* buf, uint32_t sec_cnt) {
 
    /* 4 检测硬盘状态是否可读 */
       if (!busy_wait(hd)) {			      // 若失败
-	 char error[64];
-	 sprintf(error, "%s write sector %d failed!!!!!!\n", hd->name, lba);
-	 PANIC(error);
+         char error[64];
+         sprintf(error, "%s write sector %d failed!!!!!!\n", hd->name, lba);
+         PANIC(error);
       }
 
    /* 5 将数据写入硬盘 */

@@ -132,7 +132,7 @@ void create_dir_entry(char* filename, uint32_t inode_no, uint8_t file_type, stru
 
    /* 初始化目录项 */
    memcpy(p_de->filename, filename, strlen(filename));
-   p_de->i_no = inode_no;
+   p_de->i_no = inode_no;//该目录项对应的inode号
    p_de->f_type = file_type;
 }
 
