@@ -2,6 +2,7 @@
 #define __FS_INODE_H
 #include "stdint.h"
 #include "list.h"
+#include "ide.h"
 
 // inode数据结构
 //i_size 、 inode_tag 这两个属性只存在于内存，不在硬盘中

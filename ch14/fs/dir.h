@@ -2,6 +2,7 @@
 #define __FS_DIR_H
 #include "stdint.h"
 #include "inode.h"
+#include "fs.h"
 #include "ide.h"
 #include "global.h"
 
@@ -36,4 +37,3 @@ void create_dir_entry(char* filename, uint32_t inode_no, uint8_t file_type, stru
 bool sync_dir_entry(struct dir* parent_dir, struct dir_entry* p_de, void* io_buf);
 #endif
 
-#endif

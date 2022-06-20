@@ -322,7 +322,13 @@ static int search_file(const char* pathname, struct path_search_record* searched
    return dir_e.i_no;
 }
 
-/* 在磁盘上搜索文件系统,若没有则格式化分区创建文件系统 */
+/* 在磁盘上搜索文件系统,若没有则格式化分区创建文件系统
+-----------------------------------------------------
+1.设置默认分区，调用mount_partition将该分区文件系统的元信息从硬盘上读出来加载到内存中，存储在struct partition cur_part这个数据结构中
+2.将当前分区的根目录打开
+3. 初始化全局文件表
+
+ */
 void filesys_init() {
    uint8_t channel_no = 0, dev_no, part_idx = 0;
 
@@ -378,5 +384,85 @@ void filesys_init() {
    char default_part[8] = "sdb1";
    /* 挂载分区 ，默认为sdb1分区*/
    list_traversal(&partition_list, mount_partition, (int)default_part);
+   printk("%s info:\n", cur_part->name);
+   struct super_block* sb = cur_part->sb;
+   printk("   magic:0x%x\n   part_lba_base:0x%x\n   all_sectors:0x%x\n   inode_cnt:0x%x\n   block_bitmap_lba:0x%x\n   block_bitmap_sectors:0x%x\n   inode_bitmap_lba:0x%x\n   inode_bitmap_sectors:0x%x\n   inode_table_lba:0x%x\n   inode_table_sectors:0x%x\n   data_start_lba:0x%x\n", sb->magic, sb->part_lba_base, sb->sec_cnt, sb->inode_cnt, sb->block_bitmap_lba, sb->block_bitmap_sects, sb->inode_bitmap_lba, sb->inode_bitmap_sects, sb->inode_table_lba, sb->inode_table_sects, sb->data_start_lba);
+
+   /* 将当前分区的根目录打开 */
+   open_root_dir(cur_part);
+
+   /* 初始化文件表 */
+   uint32_t fd_idx = 0;
+   while (fd_idx < MAX_FILE_OPEN) {
+      file_table[fd_idx++].fd_inode = NULL;
+   }
 }
 
+/* 打开或创建文件成功后,返回文件描述符，即pcb中fdtable的下标,否则返回-1 
+-------------------------------------------------------
+flag = O_CREATE | O_WRONLU | O_TRUNC 时，创建文件
+---------------------------------------------------------
+只支持文件打开，而不支持目录打开，所以如果path = "/a/"则返回-1， 如果path ="/a" , 则执行正常处理流程
+
+*/
+int32_t sys_open(const char* pathname, uint8_t flags) {
+  /* 对目录要用dir_open,这里只有open文件 */
+   if (pathname[strlen(pathname) - 1] == '/') {//判断路径为目录
+      printk("can`t open a directory %s\n",pathname);
+      return -1;
+   }
+   ASSERT(flags <= 7);
+   int32_t fd = -1;	   // 默认为找不到
+
+   struct path_search_record searched_record;
+   memset(&searched_record, 0, sizeof(struct path_search_record));
+
+   /* 记录目录深度.帮助判断中间某个目录不存在的情况 */
+   uint32_t pathname_depth = path_depth_cnt((char*)pathname);
+
+   /* 先检查文件是否存在 */
+   int inode_no = search_file(pathname, &searched_record);
+   bool found = inode_no != -1 ? true : false; 
+
+   if (searched_record.file_type == FT_DIRECTORY) {
+      printk("can`t open a direcotry with open(), use opendir() to instead\n");
+      dir_close(searched_record.parent_dir);
+      return -1;
+   }
+
+   uint32_t path_searched_depth = path_depth_cnt(searched_record.searched_path);
+
+   /* 先判断是否把pathname的各层目录都访问到了,即是否在某个中间目录就失败了 */
+   if (pathname_depth != path_searched_depth) {   // 说明并没有访问到全部的路径,某个中间目录是不存在的
+      printk("cannot access %s: Not a directory, subpath %s is`t exist\n", \
+	    pathname, searched_record.searched_path);
+      dir_close(searched_record.parent_dir);
+      return -1;
+   }
+
+   /* 若是在最后一个路径上没找到,并且并不是要创建文件,直接返回-1 */
+   if (!found && !(flags & O_CREAT)) {
+      printk("in path %s, file %s is`t exist\n", \
+	    searched_record.searched_path, \
+	    (strrchr(searched_record.searched_path, '/') + 1));
+      dir_close(searched_record.parent_dir);
+      return -1;
+   } else if (found && flags & O_CREAT) {  // 若要创建的文件已存在
+      printk("%s has already exist!\n", pathname);
+      dir_close(searched_record.parent_dir);
+      return -1;
+   }
+  //能够执行到这里标识，没找到文件，并且flag为创建文件
+
+   switch (flags & O_CREAT) {
+      case O_CREAT:
+         printk("creating file\n");
+         fd = file_create(searched_record.parent_dir, (strrchr(pathname, '/') + 1), flags);
+         dir_close(searched_record.parent_dir);//关闭父目录
+            // 其余为打开文件的情况
+   }
+
+   /* 此fd是指任务pcb->fd_table数组中的元素下标,
+    * 并不是指全局file_table中的下标 */
+   return fd;
+}
