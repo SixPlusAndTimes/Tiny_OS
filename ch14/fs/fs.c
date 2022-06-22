@@ -446,6 +446,23 @@ int32_t sys_write(int32_t fd, const void* buf, uint32_t count) {
    }
 }
 
+/* 从文件描述符fd指向的文件中读取count个字节到buf,若成功则返回读出的字节数,到文件尾则返回-1 
+---------------------------------------------------------------------------------------
+原理：
+      1.将进程局部描述符转化为全局文件描述符 _fd
+      2.调用file_read( &file_tabel[_fd],buf,count ) 即可
+*/
+int32_t sys_read(int32_t fd, void* buf, uint32_t count) {
+   if (fd < 0) {
+      printk("sys_read: fd error\n");
+      return -1;
+   }
+   ASSERT(buf != NULL);
+   uint32_t _fd = fd_local2global(fd);
+   return file_read(&file_table[_fd], buf, count);   
+}
+
+
 /* 在磁盘上搜索文件系统,若没有则格式化分区创建文件系统
 -----------------------------------------------------
 1.设置默认分区，调用mount_partition将该分区文件系统的元信息从硬盘上读出来加载到内存中，存储在struct partition cur_part这个数据结构中
