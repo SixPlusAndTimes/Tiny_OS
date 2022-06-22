@@ -7,7 +7,7 @@
 
 /* 文件结构 */
 struct file {
-   uint32_t fd_pos;      // 记录当前文件操作的偏移地址,以0为起始,最大为文件大小-1
+   uint32_t fd_pos;      // 记录当前文件操作的偏移地址,以0为起始,最大为文件大小-1，pos = 文件大小-1 （文件大小的单位： 字节）
    uint32_t fd_flag;
    struct inode* fd_inode;
 };
@@ -34,4 +34,7 @@ int32_t file_create(struct dir* parent_dir, char* filename, uint8_t flag);
 void bitmap_sync(struct partition* part, uint32_t bit_idx, uint8_t btmp);
 int32_t get_free_slot_in_global(void);
 int32_t pcb_fd_install(int32_t globa_fd_idx);
+int32_t file_open(uint32_t inode_no, uint8_t flag);
+int32_t file_close(struct file* file);
+int32_t file_write(struct file* file, const void* buf, uint32_t count);
 #endif
