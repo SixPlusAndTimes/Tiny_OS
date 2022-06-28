@@ -1,7 +1,6 @@
 #ifndef __FS_FS_H
 #define __FS_FS_H
 #include "stdint.h"
-
 #define MAX_FILES_PER_PART 4096	    // 每个分区所支持最大创建的文件数
 #define BITS_PER_SECTOR 4096	    // 每扇区的位数
 #define SECTOR_SIZE 512		    // 扇区字节大小
@@ -39,7 +38,7 @@ enum whence {
 */
 struct path_search_record {
    char searched_path[MAX_PATH_LEN];	    // 查找过程中的父路径
-   struct dir* parent_dir;		    // 文件或目录所在的直接父目录
+   struct dir* parent_dir;		       // 文件或目录所在的直接父目录
    enum file_types file_type;		    // 找到的是普通文件还是目录,找不到将为未知类型(FT_UNKNOWN)
 };
 
@@ -52,4 +51,5 @@ int32_t sys_write(int32_t fd, const void* buf, uint32_t count);
 int32_t sys_read(int32_t fd, void* buf, uint32_t count);
 int32_t sys_lseek(int32_t fd, int32_t offset, uint8_t whence);
 int32_t sys_unlink(const char* pathname);
+int32_t sys_mkdir(const char* pathname);
 #endif
