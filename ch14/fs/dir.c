@@ -354,3 +354,58 @@ bool delete_dir_entry(struct partition* part, struct dir* pdir, uint32_t inode_n
    /* 所有块中未找到则返回false,若出现这种情况应该是serarch_file出错了 */
    return false;
 }
+
+/* 读取目录,成功返回1个目录项,失败返回NULL 
+   连续对相同的目录调用而不使用sys_rewinddir将pos重置，那么将接着返回目录中的下一个目录项
+*/
+struct dir_entry* dir_read(struct dir* dir) {
+   struct dir_entry* dir_e = (struct dir_entry*)dir->dir_buf;
+   struct inode* dir_inode = dir->inode; 
+   uint32_t all_blocks[140] = {0}, block_cnt = 12;
+   uint32_t block_idx = 0, dir_entry_idx = 0;
+   while (block_idx < 12) {
+      all_blocks[block_idx] = dir_inode->i_sectors[block_idx];
+      block_idx++;
+   }
+   if (dir_inode->i_sectors[12] != 0) {	     // 若含有一级间接块表
+      ide_read(cur_part->my_disk, dir_inode->i_sectors[12], all_blocks + 12, 1);
+      block_cnt = 140;
+   }
+   block_idx = 0;
+
+   uint32_t cur_dir_entry_pos = 0;	  // 当前目录项的偏移,此项用来判断是否是之前已经返回过的目录项
+   uint32_t dir_entry_size = cur_part->sb->dir_entry_size;
+   uint32_t dir_entrys_per_sec = SECTOR_SIZE / dir_entry_size;	 // 1扇区内可容纳的目录项个数
+   /* 因为此目录内可能删除了某些文件或子目录,所以要遍历所有块 */
+   while (block_idx < block_cnt) {
+      if (dir->dir_pos >= dir_inode->i_size) {
+         //如果dir_pos大于等于文件尺寸，那么说明已经遍历了所有的目录项，直接放回NULL，dir_pos在执行 sys_opendir时已经置为0
+         return NULL;
+      }
+      if (all_blocks[block_idx] == 0) {     // 如果此块地址为0,即空块,继续读出下一块
+         block_idx++;
+         continue;
+      }
+      memset(dir_e, 0, SECTOR_SIZE);
+      //将硬盘上的目录项数据读入到buf即dir_e中
+      ide_read(cur_part->my_disk, all_blocks[block_idx], dir_e, 1);
+      dir_entry_idx = 0;
+      /* 遍历扇区内所有目录项 */
+      while (dir_entry_idx < dir_entrys_per_sec) {
+         if ((dir_e + dir_entry_idx)->f_type) {	 // 如果f_type不等于0,即不等于FT_UNKNOWN
+            /* 判断是不是最新的目录项,避免返回曾经已经返回过的目录项 */
+            if (cur_dir_entry_pos < dir->dir_pos) {
+               cur_dir_entry_pos += dir_entry_size;
+               dir_entry_idx++;
+               continue;
+            }
+            ASSERT(cur_dir_entry_pos == dir->dir_pos);
+            dir->dir_pos += dir_entry_size;	      // 更新为新位置,即下一个返回的目录项地址
+            return dir_e + dir_entry_idx; 
+         }
+         dir_entry_idx++;
+      }
+      block_idx++;
+   }
+   return NULL;
+}

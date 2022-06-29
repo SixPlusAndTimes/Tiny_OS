@@ -1,6 +1,7 @@
 #ifndef __FS_FS_H
 #define __FS_FS_H
 #include "stdint.h"
+#include <stdint.h>
 #define MAX_FILES_PER_PART 4096	    // 每个分区所支持最大创建的文件数
 #define BITS_PER_SECTOR 4096	    // 每扇区的位数
 #define SECTOR_SIZE 512		    // 扇区字节大小
@@ -52,4 +53,8 @@ int32_t sys_read(int32_t fd, void* buf, uint32_t count);
 int32_t sys_lseek(int32_t fd, int32_t offset, uint8_t whence);
 int32_t sys_unlink(const char* pathname);
 int32_t sys_mkdir(const char* pathname);
+struct dir* sys_opendir(const char* pathname);
+int32_t sys_closedir(struct dir* dir);
+struct dir_entry* sys_readdir(struct dir* dir);
+void sys_rewinddir(struct dir* dir);
 #endif
