@@ -4,7 +4,6 @@
 #include "list.h"
 #include "bitmap.h"
 #include "memory.h"
-
 #define MAX_FILES_OPEN_PER_PROC 8
 //使用typedef定义函数类型，注意typedef定义函数指针与定义函数类型的区别！！
 //https://blog.csdn.net/xiaorenwuzyh/article/details/48997767
@@ -92,7 +91,7 @@ struct task_struct {
     //进程有自己的页表，但是线程没有，线程的这个属性设置为NULL，这就是线程和进程的最大区别
     struct virtual_addr userprog_vaddr; //用户进程的虚拟地址
     struct mem_block_desc u_block_desc[DESC_CNT];  //用户进程的内存块描述符
-
+    uint32_t cwd_inode_nr; //进程所在的工作目录的inode编号。第十四章，getcwd需要
     uint32_t stack_magic; //魔数，用于检测栈的溢出;想想struct结构各个成员在物理地址上的分布就可以明白了
 
 };
