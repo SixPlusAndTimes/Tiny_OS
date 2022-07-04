@@ -84,7 +84,7 @@ struct task_struct {
     uint8_t elapsed_ticks; //此任务自第一次被执行以来，一共执行了多少个时间片
 
      int32_t fd_table[MAX_FILES_OPEN_PER_PROC];	// 文件描述符数组
-    0
+
     struct list_elem general_tag;// 位于一般线程队列中的节点的标签
     struct list_elem all_list_tag; // 位于 thread_all_list中的节点； 每个线程PCB的此属性都会加入到thread_all_list链表中
 

@@ -20,7 +20,8 @@ struct lock pid_lock;//分配pid的锁
 
 // 下面这个函数是用汇编写的，现在这里声明extern，以后链接时再将汇编的函数写到可执行文件中
 extern void switch_to(struct task_struct* cur, struct task_struct* next);
-
+//在main.c中的init函数，用来启动init进程
+extern void init(void);
 /* 系统空闲时运行的线程 */
 static void idle(void* arg UNUSED) {
    while(1) {
@@ -220,6 +221,10 @@ void thread_init(void) {
     list_init(&thread_ready_list);
     list_init(&thread_all_list);
     lock_init(&pid_lock);//初始换分配pid的锁
+
+     /* 先创建第一个用户进程:init */
+    process_execute(init, "init");         // 放在第一个初始化,这是第一个用户进程,init进程的pid为1
+    
     // 将当前 main 函数创建为线程
     make_main_thread();
     /* 创建idle线程 */
