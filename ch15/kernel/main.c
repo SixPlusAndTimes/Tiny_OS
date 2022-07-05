@@ -19,7 +19,7 @@ int main(void) {
    put_str("I am kernel\n");
    init_all();
    cls_screen();
-   console_put_str("[rabbit@localhost /]$ ");
+   console_put_str("[ljc@ToyOS:/]$ ");
    while(1);
    return 0;
 }

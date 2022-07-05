@@ -165,7 +165,7 @@ LOAD build/assert.o
 .plt.sec
  *(.plt.sec)
 
-.text           0x00000000c0001500     0x9ded
+.text           0x00000000c0001500     0x9f7c
  *(.text.unlikely .text.*_unlikely .text.unlikely.*)
  *(.text.exit .text.exit.*)
  *(.text.startup .text.startup.*)
@@ -361,11 +361,11 @@ LOAD build/assert.o
                 0x00000000c000ab77                dir_remove
  .text          0x00000000c000ac3a      0x505 build/fork.o
                 0x00000000c000b01d                sys_fork
- .text          0x00000000c000b13f      0x18a build/shell.o
+ .text          0x00000000c000b13f      0x319 build/shell.o
                 0x00000000c000b13f                print_prompt
-                0x00000000c000b280                my_shell
- .text          0x00000000c000b2c9       0x24 build/assert.o
-                0x00000000c000b2c9                user_spin
+                0x00000000c000b363                my_shell
+ .text          0x00000000c000b458       0x24 build/assert.o
+                0x00000000c000b458                user_spin
  *(.gnu.warning)
 
 .fini
@@ -376,47 +376,47 @@ LOAD build/assert.o
                 0x00000000c000c000                . = ALIGN (CONSTANT (MAXPAGESIZE))
                 0x00000000c000c000                . = SEGMENT_START ("rodata-segment", (ALIGN (CONSTANT (MAXPAGESIZE)) + (. & (CONSTANT (MAXPAGESIZE) - 0x1))))
 
-.rodata         0x00000000c000c000     0x226e
+.rodata         0x00000000c000c000     0x229e
  *(.rodata .rodata.* .gnu.linkonce.r.*)
- .rodata        0x00000000c000c000       0x51 build/main.o
- .rodata        0x00000000c000c051        0xa build/init.o
- *fill*         0x00000000c000c05b        0x1 
- .rodata        0x00000000c000c05c      0x2b5 build/interrupt.o
- *fill*         0x00000000c000c311        0x3 
- .rodata        0x00000000c000c314       0x88 build/timer.o
- .rodata        0x00000000c000c39c       0x2e build/debug.o
- *fill*         0x00000000c000c3ca        0x2 
- .rodata        0x00000000c000c3cc      0x3cd build/memory.o
- *fill*         0x00000000c000c799        0x3 
- .rodata        0x00000000c000c79c       0x6b build/bitmap.o
- *fill*         0x00000000c000c807        0x1 
- .rodata        0x00000000c000c808       0xc4 build/string.o
- .rodata        0x00000000c000c8cc      0x283 build/thread.o
- *fill*         0x00000000c000cb4f        0x1 
- .rodata        0x00000000c000cb50      0x135 build/sync.o
- .rodata        0x00000000c000cc85       0x36 build/keyboard.o
- *fill*         0x00000000c000ccbb        0x1 
- .rodata        0x00000000c000ccbc       0xa8 build/ioqueue.o
- .rodata        0x00000000c000cd64       0x27 build/tss.o
- *fill*         0x00000000c000cd8b        0x1 
- .rodata        0x00000000c000cd8c       0xe0 build/process.o
- .rodata        0x00000000c000ce6c       0x27 build/syscall-init.o
- *fill*         0x00000000c000ce93        0x1 
- .rodata        0x00000000c000ce94      0x1f9 build/ide.o
- *fill*         0x00000000c000d08d        0x3 
- .rodata        0x00000000c000d090      0x8a1 build/fs.o
- *fill*         0x00000000c000d931        0x3 
- .rodata        0x00000000c000d934       0xc2 build/inode.o
- *fill*         0x00000000c000d9f6        0x2 
- .rodata        0x00000000c000d9f8      0x41e build/file.o
- *fill*         0x00000000c000de16        0x2 
- .rodata        0x00000000c000de18      0x20f build/dir.o
- *fill*         0x00000000c000e027        0x1 
- .rodata        0x00000000c000e028      0x145 build/fork.o
- *fill*         0x00000000c000e16d        0x3 
- .rodata        0x00000000c000e170       0xc9 build/shell.o
- *fill*         0x00000000c000e239        0x3 
- .rodata        0x00000000c000e23c       0x32 build/assert.o
+ .rodata        0x00000000c000c000       0x49 build/main.o
+ .rodata        0x00000000c000c049        0xa build/init.o
+ *fill*         0x00000000c000c053        0x1 
+ .rodata        0x00000000c000c054      0x2b5 build/interrupt.o
+ *fill*         0x00000000c000c309        0x3 
+ .rodata        0x00000000c000c30c       0x88 build/timer.o
+ .rodata        0x00000000c000c394       0x2e build/debug.o
+ *fill*         0x00000000c000c3c2        0x2 
+ .rodata        0x00000000c000c3c4      0x3cd build/memory.o
+ *fill*         0x00000000c000c791        0x3 
+ .rodata        0x00000000c000c794       0x6b build/bitmap.o
+ *fill*         0x00000000c000c7ff        0x1 
+ .rodata        0x00000000c000c800       0xc4 build/string.o
+ .rodata        0x00000000c000c8c4      0x283 build/thread.o
+ *fill*         0x00000000c000cb47        0x1 
+ .rodata        0x00000000c000cb48      0x135 build/sync.o
+ .rodata        0x00000000c000cc7d       0x36 build/keyboard.o
+ *fill*         0x00000000c000ccb3        0x1 
+ .rodata        0x00000000c000ccb4       0xa8 build/ioqueue.o
+ .rodata        0x00000000c000cd5c       0x27 build/tss.o
+ *fill*         0x00000000c000cd83        0x1 
+ .rodata        0x00000000c000cd84       0xe0 build/process.o
+ .rodata        0x00000000c000ce64       0x27 build/syscall-init.o
+ *fill*         0x00000000c000ce8b        0x1 
+ .rodata        0x00000000c000ce8c      0x1f9 build/ide.o
+ *fill*         0x00000000c000d085        0x3 
+ .rodata        0x00000000c000d088      0x8a1 build/fs.o
+ *fill*         0x00000000c000d929        0x3 
+ .rodata        0x00000000c000d92c       0xc2 build/inode.o
+ *fill*         0x00000000c000d9ee        0x2 
+ .rodata        0x00000000c000d9f0      0x41e build/file.o
+ *fill*         0x00000000c000de0e        0x2 
+ .rodata        0x00000000c000de10      0x20f build/dir.o
+ *fill*         0x00000000c000e01f        0x1 
+ .rodata        0x00000000c000e020      0x145 build/fork.o
+ *fill*         0x00000000c000e165        0x3 
+ .rodata        0x00000000c000e168      0x102 build/shell.o
+ *fill*         0x00000000c000e26a        0x2 
+ .rodata        0x00000000c000e26c       0x32 build/assert.o
 
 .rodata1
  *(.rodata1)
@@ -425,62 +425,62 @@ LOAD build/assert.o
  *(.eh_frame_hdr)
  *(.eh_frame_entry .eh_frame_entry.*)
 
-.eh_frame       0x00000000c000e270     0x1ac8
+.eh_frame       0x00000000c000e2a0     0x1ae8
  *(.eh_frame)
- .eh_frame      0x00000000c000e270       0x5c build/main.o
- .eh_frame      0x00000000c000e2cc       0x20 build/init.o
+ .eh_frame      0x00000000c000e2a0       0x5c build/main.o
+ .eh_frame      0x00000000c000e2fc       0x20 build/init.o
                                          0x38 (size before relaxing)
- .eh_frame      0x00000000c000e2ec      0x188 build/interrupt.o
+ .eh_frame      0x00000000c000e31c      0x188 build/interrupt.o
                                         0x1a0 (size before relaxing)
- .eh_frame      0x00000000c000e474       0xcc build/timer.o
+ .eh_frame      0x00000000c000e4a4       0xcc build/timer.o
                                          0xe4 (size before relaxing)
- .eh_frame      0x00000000c000e540       0x20 build/debug.o
+ .eh_frame      0x00000000c000e570       0x20 build/debug.o
                                          0x38 (size before relaxing)
- .eh_frame      0x00000000c000e560      0x2c0 build/memory.o
+ .eh_frame      0x00000000c000e590      0x2c0 build/memory.o
                                         0x2d8 (size before relaxing)
- .eh_frame      0x00000000c000e820       0x88 build/bitmap.o
+ .eh_frame      0x00000000c000e850       0x88 build/bitmap.o
                                          0xa0 (size before relaxing)
- .eh_frame      0x00000000c000e8a8      0x140 build/string.o
+ .eh_frame      0x00000000c000e8d8      0x140 build/string.o
                                         0x158 (size before relaxing)
- .eh_frame      0x00000000c000e9e8      0x1bc build/thread.o
+ .eh_frame      0x00000000c000ea18      0x1bc build/thread.o
                                         0x1d4 (size before relaxing)
- .eh_frame      0x00000000c000eba4      0x140 build/list.o
+ .eh_frame      0x00000000c000ebd4      0x140 build/list.o
                                         0x158 (size before relaxing)
- .eh_frame      0x00000000c000ece4       0xc8 build/sync.o
+ .eh_frame      0x00000000c000ed14       0xc8 build/sync.o
                                          0xe0 (size before relaxing)
- .eh_frame      0x00000000c000edac       0xc0 build/console.o
+ .eh_frame      0x00000000c000eddc       0xc0 build/console.o
                                          0xd8 (size before relaxing)
- .eh_frame      0x00000000c000ee6c       0x60 build/keyboard.o
+ .eh_frame      0x00000000c000ee9c       0x60 build/keyboard.o
                                          0x78 (size before relaxing)
- .eh_frame      0x00000000c000eecc      0x100 build/ioqueue.o
+ .eh_frame      0x00000000c000eefc      0x100 build/ioqueue.o
                                         0x118 (size before relaxing)
- .eh_frame      0x00000000c000efcc       0x64 build/tss.o
+ .eh_frame      0x00000000c000effc       0x64 build/tss.o
                                          0x7c (size before relaxing)
- .eh_frame      0x00000000c000f030       0xc0 build/process.o
+ .eh_frame      0x00000000c000f060       0xc0 build/process.o
                                          0xd8 (size before relaxing)
- .eh_frame      0x00000000c000f0f0      0x114 build/syscall.o
+ .eh_frame      0x00000000c000f120      0x114 build/syscall.o
                                         0x12c (size before relaxing)
- .eh_frame      0x00000000c000f204       0x40 build/syscall-init.o
+ .eh_frame      0x00000000c000f234       0x40 build/syscall-init.o
                                          0x58 (size before relaxing)
- .eh_frame      0x00000000c000f244       0x88 build/stdio.o
+ .eh_frame      0x00000000c000f274       0x88 build/stdio.o
                                          0xa0 (size before relaxing)
- .eh_frame      0x00000000c000f2cc      0x254 build/ide.o
+ .eh_frame      0x00000000c000f2fc      0x254 build/ide.o
                                         0x26c (size before relaxing)
- .eh_frame      0x00000000c000f520       0x24 build/stdio-kernel.o
+ .eh_frame      0x00000000c000f550       0x24 build/stdio-kernel.o
                                          0x3c (size before relaxing)
- .eh_frame      0x00000000c000f544      0x34c build/fs.o
+ .eh_frame      0x00000000c000f574      0x34c build/fs.o
                                         0x364 (size before relaxing)
- .eh_frame      0x00000000c000f890       0xe4 build/inode.o
+ .eh_frame      0x00000000c000f8c0       0xe4 build/inode.o
                                          0xfc (size before relaxing)
- .eh_frame      0x00000000c000f974      0x140 build/file.o
+ .eh_frame      0x00000000c000f9a4      0x140 build/file.o
                                         0x158 (size before relaxing)
- .eh_frame      0x00000000c000fab4      0x14c build/dir.o
+ .eh_frame      0x00000000c000fae4      0x14c build/dir.o
                                         0x164 (size before relaxing)
- .eh_frame      0x00000000c000fc00       0xc0 build/fork.o
+ .eh_frame      0x00000000c000fc30       0xc0 build/fork.o
                                          0xd8 (size before relaxing)
- .eh_frame      0x00000000c000fcc0       0x5c build/shell.o
-                                         0x74 (size before relaxing)
- .eh_frame      0x00000000c000fd1c       0x1c build/assert.o
+ .eh_frame      0x00000000c000fcf0       0x7c build/shell.o
+                                         0x94 (size before relaxing)
+ .eh_frame      0x00000000c000fd6c       0x1c build/assert.o
                                          0x34 (size before relaxing)
  *(.eh_frame.*)
 
@@ -568,7 +568,7 @@ LOAD build/assert.o
  *(.igot.plt)
  .igot.plt      0x00000000c0011000        0x0 build/main.o
 
-.data           0x00000000c0011000      0x156
+.data           0x00000000c0011000      0x15c
  *(.data .data.* .gnu.linkonce.d.*)
  .data          0x00000000c0011000        0x0 build/main.o
  .data          0x00000000c0011000        0x0 build/init.o
@@ -600,17 +600,19 @@ LOAD build/assert.o
  .data          0x00000000c0011156        0x0 build/file.o
  .data          0x00000000c0011156        0x0 build/dir.o
  .data          0x00000000c0011156        0x0 build/fork.o
- .data          0x00000000c0011156        0x0 build/shell.o
- .data          0x00000000c0011156        0x0 build/assert.o
+ *fill*         0x00000000c0011156        0x2 
+ .data          0x00000000c0011158        0x4 build/shell.o
+                0x00000000c0011158                argc
+ .data          0x00000000c001115c        0x0 build/assert.o
 
 .data1
  *(.data1)
-                0x00000000c0011156                _edata = .
+                0x00000000c001115c                _edata = .
                 [!provide]                        PROVIDE (edata = .)
-                0x00000000c0011156                . = .
-                0x00000000c0011156                __bss_start = .
+                0x00000000c001115c                . = .
+                0x00000000c001115c                __bss_start = .
 
-.bss            0x00000000c0011160     0x1ce0
+.bss            0x00000000c0011160     0x2260
  *(.dynbss)
  *(.bss .bss.* .gnu.linkonce.b.*)
  .bss           0x00000000c0011160        0x0 build/main.o
@@ -668,17 +670,19 @@ LOAD build/assert.o
                 0x00000000c0012b60                root_dir
  .bss           0x00000000c0012d68        0x0 build/fork.o
  *fill*         0x00000000c0012d68       0x18 
- .bss           0x00000000c0012d80       0xc0 build/shell.o
-                0x00000000c0012d80                cwd_cache
- .bss           0x00000000c0012e40        0x0 build/assert.o
+ .bss           0x00000000c0012d80      0x640 build/shell.o
+                0x00000000c0012d80                final_path
+                0x00000000c0012f80                cwd_cache
+                0x00000000c0013180                argv
+ .bss           0x00000000c00133c0        0x0 build/assert.o
  *(COMMON)
-                0x00000000c0012e40                . = ALIGN ((. != 0x0)?0x4:0x1)
-                0x00000000c0012e40                . = ALIGN (0x4)
-                0x00000000c0012e40                . = SEGMENT_START ("ldata-segment", .)
-                0x00000000c0012e40                . = ALIGN (0x4)
-                0x00000000c0012e40                _end = .
+                0x00000000c00133c0                . = ALIGN ((. != 0x0)?0x4:0x1)
+                0x00000000c00133c0                . = ALIGN (0x4)
+                0x00000000c00133c0                . = SEGMENT_START ("ldata-segment", .)
+                0x00000000c00133c0                . = ALIGN (0x4)
+                0x00000000c00133c0                _end = .
                 [!provide]                        PROVIDE (end = .)
-                0x00000000c0012e40                . = DATA_SEGMENT_END (.)
+                0x00000000c00133c0                . = DATA_SEGMENT_END (.)
 
 .stab
  *(.stab)
