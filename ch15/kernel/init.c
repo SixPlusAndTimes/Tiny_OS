@@ -3,6 +3,7 @@
 #include "interrupt.h"
 #include "timer.h"
 #include "memory.h"
+#include "thread.h"
 #include "console.h"
 #include "keyboard.h"
 #include "tss.h"
@@ -20,6 +21,7 @@ void init_all() {
    keyboard_init(); // 键盘初始化
    tss_init();
    syscall_init(); //初始化系统调用
+   intr_enable();    // 后面的ide_init需要打开中断
    ide_init();	     // 初始化硬盘
    filesys_init();   // 初始化文件系统,挂载文件系统
 }
