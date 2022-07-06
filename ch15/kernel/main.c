@@ -12,7 +12,7 @@
 #include "fs.h"
 #include "assert.h"
 #include "shell.h"
-
+#include "thread.h"
 void init(void);
 
 int main(void) {
@@ -20,7 +20,10 @@ int main(void) {
    init_all();
    cls_screen();
    console_put_str("[ljc@ToyOS:/]$ ");
-   while(1);
+   while(1) {
+      // console_put_str("main");
+      thread_block(TASK_BLOCKED);
+   };
    return 0;
 }
 

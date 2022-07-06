@@ -126,21 +126,36 @@ void my_shell(void) {
       memset(cmd_line, 0, MAX_PATH_LEN);
       readline(cmd_line, MAX_PATH_LEN);
       if (cmd_line[0] == 0) {	 // 若只键入了一个回车
-	 	continue;
+	    continue;
       }
       argc = -1;
       argc = cmd_parse(cmd_line, argv, ' ');
       if (argc == -1) {
-	 printf("num of arguments exceed %d\n", MAX_ARG_NR);
-	 continue;
+         printf("num of arguments exceed %d\n", MAX_ARG_NR);
+         continue;
       }
-      
-      int32_t arg_idx = 0;
-      while(arg_idx < argc) {
-	 printf("%s ", argv[arg_idx]); 
-	 arg_idx++;
+      if (!strcmp("ls", argv[0])) {
+	      buildin_ls(argc, argv);
+      } else if (!strcmp("cd", argv[0])) {
+         if (buildin_cd(argc, argv) != NULL) {
+            memset(cwd_cache, 0, MAX_PATH_LEN);
+            strcpy(cwd_cache, final_path);//cd过后重置cwd_cache,以便my_shell循环最开始打印工作目录
+         }
+      } else if (!strcmp("pwd", argv[0])) {
+	      buildin_pwd(argc, argv);
+      } else if (!strcmp("ps", argv[0])) {
+         buildin_ps(argc, argv);
+      } else if (!strcmp("clear", argv[0])) {
+	      buildin_clear(argc, argv);
+      } else if (!strcmp("mkdir", argv[0])){
+	      buildin_mkdir(argc, argv);
+      } else if (!strcmp("rmdir", argv[0])){
+	      buildin_rmdir(argc, argv);
+      } else if (!strcmp("rm", argv[0])) {
+	      buildin_rm(argc, argv);
+      } else {
+	      printf("external command\n");
       }
-      printf("\n");
    }
    panic("my_shell: should not be here");
 }
