@@ -12,13 +12,22 @@
 #include "fs.h"
 
 #define PG_SIZE 4096
+// pid 的位图, 最大支持 1024 个 pid
+uint8_t pid_bitmap_bits[128] = {0};
+// pid 池
+struct pid_pool {
+    struct bitmap pid_bitmap; // pid 位图
+    uint32_t pid_start; // 起始pid
+    struct lock pid_lock; // 分配 pid 锁
+}pid_pool;
 
 struct task_struct* main_thread; // 主线程PCB
 struct task_struct* idle_thread;    // idle线程
 struct list thread_ready_list; // 就绪队列
 struct list thread_all_list; // 所有任务队列
 static struct list_elem* thread_tag;
-struct lock pid_lock;//分配pid的锁
+// struct lock pid_lock;//分配pid的锁
+
 
 // 下面这个函数是用汇编写的，现在这里声明extern，以后链接时再将汇编的函数写到可执行文件中
 extern void switch_to(struct task_struct* cur, struct task_struct* next);
@@ -35,6 +44,30 @@ static void idle(void* arg UNUSED) {
    }
 }
 
+// 初始化 pid 池
+static void pid_pool_init(void) {
+    pid_pool.pid_start = 1;
+    pid_pool.pid_bitmap.bits = pid_bitmap_bits;
+    pid_pool.pid_bitmap.btmp_bytes_len = 128;
+    bitmap_init(&pid_pool.pid_bitmap);
+    lock_init(&pid_pool.pid_lock);
+}
+// 分配 pid
+static pid_t allocate_pid(void) {
+    lock_acquire(&pid_pool.pid_lock);
+    int32_t bit_idx = bitmap_scan(&pid_pool.pid_bitmap, 1);
+    bitmap_set(&pid_pool.pid_bitmap, bit_idx, 1);
+    lock_release(&pid_pool.pid_lock);
+    return (bit_idx + pid_pool.pid_start);
+}
+
+// 释放 pid
+void release_pid(pid_t pid) {
+    lock_acquire(&pid_pool.pid_lock);
+    int32_t bit_idx = pid - pid_pool.pid_start;
+    bitmap_set(&pid_pool.pid_bitmap, bit_idx, 0);
+    lock_release(&pid_pool.pid_lock);
+}
 // 获取当前线程的PCB指针
 struct task_struct* running_thread() {
     uint32_t esp;
@@ -49,15 +82,6 @@ static void kernel_thread(thread_func* function, void* func_arg) {
     // 进入中断处理器会自动关闭中断，在执行function前要开中断
     intr_enable();//执行前要开中断，避免时钟中断被屏蔽，否则操作系统就再也能重新接管整个系统了，function函数将会独占整个操作系统
     function(func_arg);
-}
-
-// 分配 pid
-static pid_t allocate_pid(void) {
-    static pid_t next_pid = 0;
-    lock_acquire(&pid_lock);
-    next_pid++;
-    lock_release(&pid_lock);
-    return next_pid;
 }
 /* fork进程时为其分配pid,因为allocate_pid已经是静态的,别的文件无法调用.
 不想改变函数定义了,故定义fork_pid函数来封装一下。*/
@@ -217,12 +241,62 @@ void thread_yield(void) {
    schedule();
    intr_set_status(old_status);
 }
+
+// 回收 thread_over 的 pcb 和页表, 并将其从调度队列中去除
+void thread_exit(struct task_struct* thread_over, bool need_schedule) {
+    // 要保证 schedule 在关中断情况下调用
+    intr_disable();
+    thread_over->status = TASK_DIED;
+
+    // 如果 thread_over 不是当前线程, 就有可能还在就绪队列中, 将其从中删除
+    if (elem_find(&thread_ready_list, &thread_over->general_tag)) {
+        list_remove(&thread_over->general_tag);
+    }
+    if (thread_over->pgdir) { // 如果是进程, 回收进程的页表
+        mfree_page(PF_KERNEL, thread_over->pgdir, 1);
+    }
+
+    // 从 all_thread_list 中去掉此任务
+    list_remove(&thread_over->all_list_tag);
+
+    // 回收 pcb 所在的页, 主线程的 pcb 不在堆中, 跨过
+    if (thread_over != main_thread) {
+        mfree_page(PF_KERNEL, thread_over, 1);
+    }
+
+    // 归还 pid
+    release_pid(thread_over->pid);
+
+    // 如果需要下一轮调度则主动调用 schedule
+    if (need_schedule) {
+        schedule();
+        PANIC("thread_exit: should not be here\n");
+    }
+}
+
+// 比对任务的 pid
+static bool pid_check(struct list_elem* pelem, int32_t pid) {
+    struct task_struct* pthread = elem2entry(struct task_struct, all_list_tag, pelem);
+    return pthread->pid == pid;
+}
+
+// 根据 pid 找 pcb, 若找到则返回该 pcb, 否则返回 NULL
+struct task_struct* pid2thread(int32_t pid) {
+    struct list_elem* pelem = list_traversal(&thread_all_list, pid_check, pid);
+    if (pelem == NULL) {
+        return NULL;
+    }
+    struct task_struct* thread = elem2entry(struct task_struct, all_list_tag, pelem);
+    return thread;
+}
+
+
 void thread_init(void) {
     put_str("thread_init start\n");
     //初始化两个链表
     list_init(&thread_ready_list);
     list_init(&thread_all_list);
-    lock_init(&pid_lock);//初始换分配pid的锁
+    pid_pool_init(); //害人不浅啊！！
 
      /* 先创建第一个用户进程:init */
     process_execute(init, "init");         // 放在第一个初始化,这是第一个用户进程,init进程的pid为1
@@ -237,12 +311,12 @@ void thread_init(void) {
 
 // 当前线程将自己阻塞，
 void thread_block(enum task_status stat) {
-    ASSERT(stat == TASK_BLOCKED || TASK_WAITING || TAsK_HANGING);
+    ASSERT(stat == TASK_BLOCKED || TASK_WAITING || TASK_HANGING);
 
     enum intr_status old_status = intr_disable();//关中断，并记录旧的中断状态
 
     struct task_struct* cur_thread = running_thread();//获取当前线程的taskstruct的指针
-    cur_thread->status = stat;//将当前线程的状态改为阻塞状态，即TASK_BLOCKED || TASK_WAITING || TAsK_HANGING 中的一种
+    cur_thread->status = stat;//将当前线程的状态改为阻塞状态，即TASK_BLOCKED || TASK_WAITING || TASK_HANGING 中的一种
     schedule();//调用schedule将当前线程换下处理器,应为当前线程的状态不为RUNNNING所以调度程序知道，本线程不是因为时间片用光而被调度，而是先陷入了阻塞，所以不会将本线程的genenral_tag加入到等待队列中
     // 待当前线程接触阻塞后才继续运行 设置中断状态，
     // 注意不要自以为是地开中断，因为线程先前的中断状态是很难预测的，只能将线程一开始的中断状态记录下来，然后再用旧状态设置
@@ -253,7 +327,7 @@ void thread_block(enum task_status stat) {
 void thread_unblock(struct task_struct* pthread) {
     enum intr_status old_status = intr_disable();// 关中断，并记录旧的中断状态
 
-    ASSERT((pthread->status == TASK_BLOCKED) || (pthread->status == TASK_WAITING) || (pthread->status == TAsK_HANGING));
+    ASSERT((pthread->status == TASK_BLOCKED) || (pthread->status == TASK_WAITING) || (pthread->status == TASK_HANGING));
 
     if(pthread->status != TASK_RUNNING) {
         ASSERT(!elem_find(&thread_ready_list, &pthread->general_tag));

@@ -8,7 +8,7 @@
 /* 文件结构 */
 struct file {
    uint32_t fd_pos;      // 记录当前文件操作的偏移地址,以0为起始,最大为文件大小-1，pos是读写文件时的标记
-   uint32_t fd_flag;
+   uint32_t fd_flag;       //当文件为管道时，falg == 0XFFF
    struct inode* fd_inode;
 };
 

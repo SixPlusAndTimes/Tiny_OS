@@ -78,3 +78,15 @@ void ioq_putchar(struct ioqueue* ioq, char byte) {
         wakeup(&ioq->consumer);
     }
 }
+/* 返回环形缓冲区中当前写入数据的长度 */
+uint32_t ioq_length(struct ioqueue* ioq) {
+   uint32_t len = 0;
+   if (ioq->head >= ioq->tail) {
+       // ...未使用..tail ... 已使用 ... head ...未使用 ....
+      len = ioq->head - ioq->tail;
+   } else {
+       //...已使用... head ...未使用 ....tail....已使用...
+      len = bufsize - (ioq->tail - ioq->head);     
+   }
+   return len;
+}

@@ -1,27 +1,31 @@
 #ifndef __THREAD_THREAD_H
 #define __THREAD_THREAD_H
-#include "stdint.h"
-#include "list.h"
+
 #include "bitmap.h"
+#include "list.h"
 #include "memory.h"
+#include "stdint.h"
+
+#define TASK_NAME_LEN 16
 #define MAX_FILES_OPEN_PER_PROC 8
-//使用typedef定义函数类型，注意typedef定义函数指针与定义函数类型的区别！！
-//https://blog.csdn.net/xiaorenwuzyh/article/details/48997767
+// 自定义通用函数类型, 在线程函数中作为形参类型
 typedef void thread_func(void*);
 typedef int16_t pid_t;
-//定义进程或者线程的状态
+
+// 进程或线程状态
 enum task_status {
     TASK_RUNNING,
     TASK_READY,
     TASK_BLOCKED,
     TASK_WAITING,
-    TAsK_HANGING,
+    TASK_HANGING,
     TASK_DIED
 };
 
-// 中断栈intr_stack
-//用于中断发生时保护程序的上下文
-// 中断栈在内核栈中的位置是固定的，在PCB页的最顶端
+// 中断栈 intr_stack
+// 用于中断发生时保护程序(线程或进程)的上下文环境:
+// 1. 线程进入中断后, 位于 kernel.S 中的中断代码会通过此栈来保存上下文
+// 2. 实现用户进程时, 会将用户进程的初始信息放在中断栈中
 struct intr_stack {
     uint32_t vec_no; // kernel.S 宏 VECTOR 中 %1 压入的中断号
     uint32_t edi;
@@ -46,56 +50,48 @@ struct intr_stack {
     uint32_t ss;
 };
 
-//线程自己的栈，用于存储线程中待执行的函数
-// 此结构在自己的内核栈中的位置不固定
-// 在switch_to时保存上下文环境
+// 线程栈 thread_stack
+// 用在 switch_to 时保存线程环境
 struct thread_stack {
     uint32_t ebp;
     uint32_t ebx;
     uint32_t edi;
     uint32_t esi;
 
-    //线程首次执行时，eip指向待调用的函数kernel_thread
-    //fork出来的子进程的eip指向intr_exit，使得子进程直接从中断返回。实现了fork一次，返回两次（父子进程各一次）的现象
-    //其他情况下，eip指向schedule函数的下个地址
+    // 线程第一次执行时, eip 指向待调用的函数 kernel_thread
+    // 其他时候, eip 是指向 switch_to 的返回地址
     void (*eip) (thread_func* func, void* func_arg);
 
-    // 下面的数据只在第一次被调度上cpu时使用
-
-    //返回地址，仅供占用，没有实际的作用，因为 第一次（注意是第一次） kernel_thread的执行不是通过call来调用的，而是通过ret来调用的！！
-    //但是为了符合C语言的函数调用规约，我们必须在栈顶放上放回地址，这个返回地址不由作用，只是充数的，为了符合规定
-    // 否则在kernel_thread执行过程中会找错参数的位置而出错
+    // 以下仅供第一次被调度上 cpu 时使用
+    // unused_ret 只为占位置充数为返回地址
     void (*unused_retaddr);
-    thread_func* function; // 由 kernel_thread 所调用的函数
+    thread_func* function; // 由 kernel_thread 所调用的函数名
     void* func_arg; // 由 kernel_thread 所调用的函数所需的参数
 };
 
-//进程的pcb控制块
-// 以上两个栈结构都位于内核栈中，都位于PCB的高地址处
+// 进程或线程的 PCB
 struct task_struct {
-    uint32_t* self_kstack; // 每个线程都有一个自己的内核栈，存储的是thread_stack地址
+    uint32_t* self_kstack; // 各内核线程都用自己的内核栈
     pid_t pid;
     enum task_status status;
-
     char name[16];
-
     uint8_t priority; // 线程优先级
-    uint8_t ticks; // 每一次 该线程在处理器上被分配的时间片
-    uint8_t elapsed_ticks; //此任务自第一次被执行以来，一共执行了多少个时间片
+    uint8_t ticks; // 每次在处理器上执行的时间嘀嗒数
 
-     int32_t fd_table[MAX_FILES_OPEN_PER_PROC];	// 文件描述符数组
+    uint32_t elapsed_ticks; // 此任务上 cpu 运行后至今占用了多少嘀嗒数
 
-    struct list_elem general_tag;// 位于一般线程队列中的节点的标签
-    struct list_elem all_list_tag; // 位于 thread_all_list中的节点； 每个线程PCB的此属性都会加入到thread_all_list链表中
+    int32_t fd_table[MAX_FILES_OPEN_PER_PROC]; // 文件描述符数组
 
-    uint32_t* pgdir;// 进程自己的页表的虚拟地址
-    //进程有自己的页表，但是线程没有，线程的这个属性设置为NULL，这就是线程和进程的最大区别
-    struct virtual_addr userprog_vaddr; //用户进程的虚拟地址
-    struct mem_block_desc u_block_desc[DESC_CNT];  //用户进程的内存块描述符
-    uint32_t cwd_inode_nr; //进程所在的工作目录的inode编号。第十四章，getcwd需要
-    int16_t parent_pid;		 // 父进程pid
-    uint32_t stack_magic; //魔数，用于检测栈的溢出;想想struct结构各个成员在物理地址上的分布就可以明白了
+    struct list_elem general_tag; // 用于线程在一般队列中的结点
+    struct list_elem all_list_tag; // 用于线程在 thread_all_list 中的结点
 
+    uint32_t* pgdir; // 进程自己页表的虚拟地址
+    struct virtual_addr userprog_vaddr; // 用户进程的虚拟地址
+    struct mem_block_desc u_block_desc[DESC_CNT]; // 用户进程内存块描述符
+    uint32_t cwd_inode_nr; // 进程所在的工作目录的 inode 编号
+    int16_t parent_pid; // 父进程 pid
+    int8_t exit_status; // 进程结束时自己调用 exit 传入的参数
+    uint32_t stack_magic; // 栈的边界标记, 用于检测栈的溢出
 };
 
 extern struct list thread_ready_list;
@@ -104,7 +100,6 @@ extern struct list thread_all_list;
 void thread_create(struct task_struct* pthread, thread_func function, void* func_arg);
 void init_thread(struct task_struct* pthread, char* name, int prio);
 struct task_struct* thread_start(char* name, int prio, thread_func function, void* func_arg);
-
 struct task_struct* running_thread(void);
 void schedule(void);
 void thread_init(void);
@@ -113,4 +108,7 @@ void thread_unblock(struct task_struct* pthread);
 void thread_yield(void);
 pid_t fork_pid(void);
 void sys_ps(void);
+void thread_exit(struct task_struct* thread_over, bool need_schedule);
+struct task_struct* pid2thread(int32_t pid);
+void release_pid(pid_t pid);
 #endif

@@ -119,14 +119,21 @@ static int32_t build_child_stack(struct task_struct* child_thread) {
    return 0;
 }
 
-/* 更新inode打开数 */
+/* 更新inode打开数 
+ 15张加入管道文件判断逻辑
+*/
 static void update_inode_open_cnts(struct task_struct* thread) {
    int32_t local_fd = 3, global_fd = 0;
    while (local_fd < MAX_FILES_OPEN_PER_PROC) {
       global_fd = thread->fd_table[local_fd];
       ASSERT(global_fd < MAX_FILE_OPEN);
       if (global_fd != -1) {
-	 file_table[global_fd].fd_inode->i_open_cnts++;
+         if (is_pipe(local_fd)) {
+            // 判断是管道文件
+            file_table[global_fd].fd_pos++;
+         } else {
+            file_table[global_fd].fd_inode->i_open_cnts++;
+         }
       }
       local_fd++;
    }

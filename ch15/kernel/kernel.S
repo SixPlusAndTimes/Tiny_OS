@@ -1,6 +1,5 @@
 [bits 32]
 %define ERROR_CODE nop
-
 %define ZERO push 0
 
 extern idt_table ; idt_table 是 C 中注册的中断处理程序数组
@@ -12,12 +11,12 @@ intr_entry_table:
 %macro VECTOR 2
 section .text
 intr%1entry:
-    %2 ;压入错误码
+    %2
     push ds
     push es
     push fs
     push gs
-    pushad ; 压入8个通用 32 位寄存器, 其入栈顺序是: eax, ecx, edx, ebx, esp, ebp, esi, edi
+    pushad ; 压入 32 位寄存器, 其入栈顺序是: eax, ecx, edx, ebx, esp, ebp, esi, edi
 
     ; 如果是从片上进入的中断，除了往从片上发送 EOI 外, 还要往主片上发送 EOI
     mov al, 0x20 ; 中断结束命令 EOI
@@ -78,7 +77,7 @@ VECTOR 0x1c, ZERO
 VECTOR 0x1d, ERROR_CODE
 VECTOR 0x1e, ERROR_CODE
 VECTOR 0x1f, ZERO 
-VECTOR 0x20, ZERO   ;时钟中断
+VECTOR 0x20,ZERO	;时钟中断对应的入口
 VECTOR 0x21,ZERO	;键盘中断对应的入口
 VECTOR 0x22,ZERO	;级联用的
 VECTOR 0x23,ZERO	;串口2对应的入口
@@ -94,7 +93,6 @@ VECTOR 0x2c,ZERO	;ps/2鼠标
 VECTOR 0x2d,ZERO	;fpu浮点单元异常
 VECTOR 0x2e,ZERO	;硬盘
 VECTOR 0x2f,ZERO	;保留
-
 
 ; 0x80 号中断
 [bits 32]
@@ -122,6 +120,6 @@ syscall_handler:
     call [syscall_table + eax * 4]
     add esp, 12 ; 跳过上面的 3 个参数
 
-; 4. 将 call 调用后的返回值存入待当前内核栈中 eax 的位置, 这样执行中断退出例程popad时，eax寄存器会得到正确的返回值
+; 4. 将 call 调用后的返回值存入待当前内核栈中 eax 的位置
     mov [esp + 8 * 4], eax
     jmp intr_exit   ; intr_exit 返回, 恢复上下文

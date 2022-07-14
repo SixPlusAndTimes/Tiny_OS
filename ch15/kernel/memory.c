@@ -54,7 +54,7 @@ struct arena {
    bool large;		   
 };
 
-struct mem_block_desc k_block_descs[DESC_CNT];//内核内存块描述驻足
+struct mem_block_desc k_block_descs[DESC_CNT];//内核内存块描述，注意这是内核的；不会同进程共享，进程会自己创建一个新的快描述符
 
 static void* vaddr_get(enum pool_flags pf, uint32_t pg_cnt) {
     int vaddr_start = 0, bit_idx_start = -1;
@@ -202,6 +202,7 @@ void* get_user_pages(uint32_t pg_cnt) {
 
 // 将地址 vaddr 与 pf 池中的物理地址关联 与 get_kernel_pages get_user_pages函数相比，这个函数能够指定关联的虚拟地址
 // 这个函数用来分配用户线程的3特权级栈，因为3特权级栈的栈顶是分配好的，详见 process.h中的宏
+//也用在execv相关函数中，15章
 void* get_a_page(enum pool_flags pf, uint32_t vaddr) {
     struct pool* mem_pool = pf & PF_KERNEL ? &kernel_pool : &user_pool;
     lock_acquire(&mem_pool->lock);
@@ -504,6 +505,19 @@ void sys_free(void* ptr) {
         lock_release(&mem_pool->lock);
     }
 }
+// 根据物理页框地址 pg_phy_addr 在相应的内存池的位图清 0, 不改动页表
+void free_a_phy_page(uint32_t pg_phy_addr) {
+    struct pool* mem_pool;
+    uint32_t bit_idx = 0;
+    if (pg_phy_addr >= user_pool.phy_addr_start) {
+        mem_pool = &user_pool;
+        bit_idx = (pg_phy_addr - user_pool.phy_addr_start) / PG_SIZE;
+    } else {
+        mem_pool = &kernel_pool;
+        bit_idx = (pg_phy_addr - kernel_pool.phy_addr_start) / PG_SIZE;
+    }
+    bitmap_set(&mem_pool->pool_bitmap, bit_idx, 0);
+}//15章，exit、waiy系统调用
 
 // 初始化内存池
 static void mem_pool_init(uint32_t all_mem) {
